@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#080e1d" />
+  <meta name="description" content="Aetheria Online: Astral Chronicles — a 3D anime MMORPG. Choose a class, hunt monsters, clear the Frost Hollow and collect celestial avatar sets." />
+  <title>Aetheria Online — Astral Chronicles</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%23ffe3a3'/%3E%3Cstop offset='1' stop-color='%236fe3ff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M32 4l7 18 19 3-14 13 4 20-16-10-16 10 4-20L6 25l19-3z' fill='url(%23g)'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <div id="app">
+    <canvas id="game" aria-label="Aetheria 3D world"></canvas>
+    <div id="cinematic-bars"><span></span><span></span></div>
+    <div id="color-grade"></div>
+    <div id="vignette"></div>
+
+    <div id="nameplates" aria-hidden="true"></div>
+    <div id="damage-layer" aria-hidden="true"></div>
+    <div id="fx-layer" aria-hidden="true"></div>
+    <div id="toasts" aria-live="polite"></div>
+
+    <!-- ═══════════ HUD ═══════════ -->
+    <div id="hud" class="hidden">
+      <header id="hud-top">
+        <section id="player-panel" class="glass">
+          <div class="portrait-wrap">
+            <img id="player-portrait" alt="" />
+            <span id="player-level" class="level-badge">1</span>
+          </div>
+          <div class="player-meta">
+            <div class="player-name-row">
+              <strong id="player-name">Astra</strong>
+              <span id="player-class" class="class-chip">Warrior</span>
+            </div>
+            <div class="stat-bar hp"><i id="hp-fill"></i><b id="hp-text">100 / 100</b></div>
+            <div class="stat-bar mp"><i id="mp-fill"></i><b id="mp-text">60 / 60</b></div>
+            <div class="stat-bar xp"><i id="xp-fill"></i><b id="xp-text">0%</b></div>
+          </div>
+        </section>
+
+        <section id="zone-info">
+          <span class="zone-kicker">Aurora Isle · NA-01</span>
+          <h2 id="zone-name">Lumen Harbor</h2>
+          <span id="zone-sub">Peaceful harbor town</span>
+        </section>
+
+        <section id="hud-right">
+          <div class="top-actions">
+            <button class="icon-btn" id="btn-missions" title="Weekly missions" aria-label="Weekly missions">
+              <svg viewBox="0 0 24 24"><path d="M7 4h10v3H7zM5 7h14v14H5zM8 11h8M8 15h5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              <i class="dot" id="mission-dot"></i>
+            </button>
+            <button class="icon-btn" id="btn-gacha" title="Avatar altar" aria-label="Avatar gacha">
+              <svg viewBox="0 0 24 24"><path d="M12 2l2.4 6.2L21 10l-5 4.4L17.5 21 12 17.6 6.5 21 8 14.4 3 10l6.6-1.8z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+              <i class="dot amber" id="gacha-dot"></i>
+            </button>
+            <button class="icon-btn" id="btn-character" title="Character" aria-label="Character">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 21c.6-4.2 3.6-6.4 7.5-6.4s6.9 2.2 7.5 6.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </button>
+            <button class="icon-btn" id="btn-settings" title="Settings" aria-label="Settings">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+          <div id="minimap-wrap" class="glass">
+            <canvas id="minimap" width="196" height="196"></canvas>
+            <span class="minimap-compass">N</span>
+            <div class="minimap-foot"><span id="online-count">1,248</span> adventurers online</div>
+          </div>
+        </section>
+      </header>
+
+      <div id="target-frame" class="hidden">
+        <div class="target-portrait"><span id="target-emoji">◈</span></div>
+        <div class="target-body">
+          <div class="target-head"><strong id="target-name">Frost Wolf</strong><span id="target-level">Lv. 6</span></div>
+          <div class="target-bar"><i id="target-hp-fill"></i></div>
+          <span id="target-hp-text">100%</span>
+        </div>
+      </div>
+
+      <div id="boss-frame" class="hidden">
+        <div class="boss-title"><span>WORLD BOSS</span><strong id="boss-name">Frostfang, the Hollow Wyrm</strong></div>
+        <div class="boss-bar"><i id="boss-hp-fill"></i></div>
+        <div class="boss-sub"><span id="boss-phase">Phase I</span><span id="boss-hp-text">100%</span></div>
+      </div>
+
+      <aside id="quest-tracker" class="glass">
+        <div class="tracker-head"><span class="rune">✦</span><h3>Astral Missions</h3><button id="tracker-open">VIEW</button></div>
+        <ul id="tracker-list"></ul>
+        <div class="tracker-reward" id="tracker-reward">
+          <span class="mini-ticket">✧</span>
+          <div><b>Celestia Invitation</b><small>Complete all missions · 10× summon</small></div>
+        </div>
+      </aside>
+
+      <aside id="chat-feed" class="glass">
+        <div class="chat-tabs"><span class="active">World</span><span>Party</span><span>Guild</span></div>
+        <div id="chat-lines"></div>
+      </aside>
+
+      <div id="party-frame" class="glass">
+        <div class="party-head"><span>Guild · Astral Dawn</span><b>04/08</b></div>
+        <div id="party-list"></div>
+      </div>
+
+      <div id="interact-prompt" class="hidden"><kbd>E</kbd><span id="interact-text">Talk</span></div>
+
+      <footer id="hud-bottom">
+        <div id="joystick-zone">
+          <div id="joystick-base"><div id="joystick-knob"></div></div>
+          <span class="joy-label">MOVE</span>
+        </div>
+
+        <div id="skill-dock">
+          <div class="dock-ornament left"></div>
+          <div id="skill-slots"></div>
+          <button id="potion-btn" class="skill-slot utility" title="Elixir">
+            <span class="slot-key">R</span>
+            <span class="slot-glyph">⚗</span>
+            <span class="slot-name">Elixir</span>
+            <i class="cooldown" id="potion-cd"></i>
+            <span class="count" id="potion-count">5</span>
+          </button>
+          <div class="dock-ornament right"></div>
+        </div>
+
+        <div id="mobile-actions">
+          <button id="btn-dash" class="action-btn small">DASH</button>
+          <button id="btn-attack-mobile" class="action-btn attack">⚔</button>
+          <button id="btn-interact-mobile" class="action-btn small">E</button>
+        </div>
+      </footer>
+
+      <div id="hint-strip">
+        <span><kbd>WASD</kbd> Move</span><span><kbd>Space</kbd> Attack</span><span><kbd>1–4</kbd> Skills</span><span><kbd>Drag</kbd> Camera</span><span><kbd>Tab</kbd> Target</span>
+      </div>
+
+      <button id="btn-guide" title="How to play">?</button>
+    </div>
+
+    <!-- ═══════════ START / CHARACTER CREATION ═══════════ -->
+    <section id="start-screen">
+      <div class="start-top">
+        <div class="server-pill"><i></i> Aurora Isle · NA-01 <span>OPEN</span></div>
+        <button class="sound-toggle" id="sound-toggle" aria-label="Toggle sound"><span class="bars"><i></i><i></i><i></i><i></i></span><em>SOUND ON</em></button>
+      </div>
+
+      <div id="title-view" class="start-view active">
+        <div class="brand">
+          <span class="brand-kicker">AURORA ISLE PRESENTS</span>
+          <h1 class="game-logo">AETHERIA<span>ONLINE</span></h1>
+          <div class="logo-rule"><i></i><span>✦</span><i></i></div>
+          <p class="brand-sub">ASTRAL CHRONICLES</p>
+        </div>
+
+        <div class="title-copy">
+          <p>An anime MMORPG of floating harbors, forgotten dungeons<br/>and starlit avatars. Forge your legend under the aurora.</p>
+        </div>
+
+        <div class="title-actions">
+          <button id="btn-start" class="cta-btn"><span>ENTER AETHERIA</span><small>Create your adventurer</small></button>
+          <div class="title-meta">
+            <span>8 CLASSES</span><i></i><span>3D OPEN WORLD</span><i></i><span>WEEKLY GACHA</span>
+          </div>
+        </div>
+
+        <div class="title-footer">
+          <span>© 2026 Aurora Isle Studio · Fan-made tribute</span>
+          <span class="version">BUILD 1.0.0 · PROTOCOL 07</span>
+        </div>
+      </div>
+
+      <div id="create-view" class="start-view">
+        <div class="create-panel glass-strong">
+          <header class="create-head">
+            <div>
+              <span class="brand-kicker">STEP 01 / 01</span>
+              <h2>Forge your <em>adventurer</em></h2>
+            </div>
+            <button id="btn-back-title" class="ghost-btn">← BACK</button>
+          </header>
+
+          <div class="create-body">
+            <div class="create-preview">
+              <div class="preview-glow"></div>
+              <img id="class-preview-img" alt="Class preview" />
+              <div class="preview-ring"></div>
+              <div class="preview-caption"><span id="preview-role">VANGUARD</span><strong id="preview-name">Warrior</strong></div>
+            </div>
+
+            <div class="create-right">
+              <label class="field-label" for="char-name">ADVENTURER NAME</label>
+              <div class="name-field">
+                <input id="char-name" maxlength="14" value="Astra" autocomplete="off" spellcheck="false" />
+                <button id="random-name" title="Random name">⟳</button>
+              </div>
+
+              <label class="field-label">CHOOSE YOUR CLASS <span id="class-count">1 / 8</span></label>
+              <div id="class-grid"></div>
+
+              <div class="class-detail">
+                <div class="class-detail-head">
+                  <span id="detail-role" class="role-tag">VANGUARD</span>
+                  <div id="detail-stars">★★★★☆</div>
+                </div>
+                <p id="detail-desc">A balanced front-line duelist. Master of the blade and unbreakable resolve.</p>
+                <div class="class-stats">
+                  <div><span>ATK</span><i><b id="stat-atk" style="width:70%"></b></i></div>
+                  <div><span>DEF</span><i><b id="stat-def" style="width:60%"></b></i></div>
+                  <div><span>MAG</span><i><b id="stat-mag" style="width:30%"></b></i></div>
+                  <div><span>SPD</span><i><b id="stat-spd" style="width:55%"></b></i></div>
+                </div>
+                <div id="detail-skills" class="detail-skills"></div>
+              </div>
+
+              <button id="btn-create" class="cta-btn compact"><span>BEGIN JOURNEY</span><small>Enter Lumen Harbor</small></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="loading">
+      <div class="load-mark">✦</div>
+      <h2>AETHERIA ONLINE</h2>
+      <div class="load-track"><i id="load-fill"></i></div>
+      <p id="load-text">Weaving the astral world…</p>
+    </div>
+
+    <div id="modal-root"></div>
+    <div id="fade"></div>
+    <div id="rotate-hint"><span>↻</span> Rotate your device for the full adventure</div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
