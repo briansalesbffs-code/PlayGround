@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#120e20">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>NÉVOA — A Lenda dos Três Cristais</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+  <canvas id="world"></canvas>
+
+  <!-- ===== Overworld HUD ===== -->
+  <div id="hud" class="hud hidden">
+    <div class="hud-top">
+      <div class="area-pill">
+        <span class="area-dot"></span>
+        <span id="areaName">Vila Aurora</span>
+      </div>
+      <div class="hud-right">
+        <div class="stat-pill" title="Cristais"><span class="ico ico-crystal"></span><span id="crystalCount">0</span><small>/3</small></div>
+        <div class="stat-pill" title="Moedas"><span class="ico ico-coin"></span><span id="coinCount">0</span></div>
+        <button id="btnPause" class="icon-btn" aria-label="Menu">≡</button>
+      </div>
+    </div>
+    <div id="objective" class="objective">
+      <span class="obj-tag">OBJETIVO</span>
+      <span id="objectiveText">Fale com a Professora Íris</span>
+    </div>
+    <div id="interactHint" class="interact-hint hidden"><b>A</b> <span id="interactLabel">Falar</span></div>
+
+    <div id="touchControls" class="touch-controls">
+      <div id="joystick" class="joystick" aria-label="Mover">
+        <div class="joy-ring"></div>
+        <div id="joyKnob" class="joy-knob"></div>
+      </div>
+      <div class="action-cluster">
+        <button id="btnMenuM" class="round-btn small" aria-label="Menu">☰</button>
+        <button id="btnAction" class="round-btn action" aria-label="Ação">A</button>
+      </div>
+    </div>
+    <div id="toast" class="toast"></div>
+  </div>
+
+  <!-- ===== Title ===== -->
+  <section id="titleScreen" class="title-screen">
+    <canvas id="titleCanvas"></canvas>
+    <div class="title-wrap">
+      <div class="title-logo">
+        <div class="logo-mark"><canvas id="logoCreature" width="132" height="132"></canvas></div>
+        <h1>NÉVOA</h1>
+        <p class="logo-sub">A LENDA DOS TRÊS CRISTAIS</p>
+      </div>
+      <div class="title-actions">
+        <button id="btnContinue" class="btn btn-primary hidden">Continuar</button>
+        <button id="btnNew" class="btn btn-primary">Novo jogo</button>
+        <button id="btnHow" class="btn btn-ghost">Como jogar</button>
+      </div>
+      <p class="title-foot">Um RPG de criaturas original · jogue offline</p>
+    </div>
+    <div id="titleBadge" class="title-badge">v1.0 · PWA para celular</div>
+  </section>
+
+  <!-- ===== Dialogue ===== -->
+  <section id="dialogue" class="dialogue hidden">
+    <div class="dialogue-card">
+      <div id="dlgPortrait" class="dlg-portrait"><canvas width="96" height="96"></canvas></div>
+      <div class="dlg-body">
+        <div id="dlgName" class="dlg-name">Íris</div>
+        <p id="dlgText" class="dlg-text"></p>
+        <div id="dlgChoices" class="dlg-choices hidden"></div>
+        <div id="dlgNext" class="dlg-next">▾ toque para continuar</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Pause menu ===== -->
+  <section id="menuScreen" class="sheet hidden">
+    <div class="sheet-card">
+      <header class="sheet-head">
+        <h2>Mochila</h2>
+        <button class="icon-btn" data-close-menu aria-label="Fechar">✕</button>
+      </header>
+      <div class="menu-tabs">
+        <button class="tab active" data-tab="team">Time</button>
+        <button class="tab" data-tab="bag">Bolsa</button>
+        <button class="tab" data-tab="info">Jornada</button>
+      </div>
+      <div id="menuBody" class="menu-body"></div>
+      <footer class="sheet-foot">
+        <button id="btnSave" class="btn btn-primary slim">Salvar</button>
+        <button id="btnHelp" class="btn btn-ghost slim">Controles</button>
+        <button id="btnQuit" class="btn btn-danger slim">Título</button>
+      </footer>
+    </div>
+  </section>
+
+  <!-- ===== Shop ===== -->
+  <section id="shopScreen" class="sheet hidden">
+    <div class="sheet-card shop-card">
+      <header class="sheet-head">
+        <div><h2>Loja da Vila</h2><p class="sheet-sub">“Poções fresquinhas, direto do caldeirão!”</p></div>
+        <div class="shop-wallet"><span class="ico ico-coin"></span><span id="shopCoins">0</span></div>
+      </header>
+      <div id="shopList" class="menu-body"></div>
+      <footer class="sheet-foot"><button class="btn btn-ghost slim" data-close-shop>Fechar</button></footer>
+    </div>
+  </section>
+
+  <!-- ===== Battle ===== -->
+  <section id="battleScreen" class="battle hidden">
+    <div class="battle-sky"></div>
+    <div class="battle-rays"></div>
+    <div class="battle-field">
+      <div class="platform p-enemy"></div>
+      <div class="platform p-player"></div>
+      <div id="enemyWrap" class="creature-wrap enemy-wrap"><canvas id="enemySprite" width="240" height="240"></canvas></div>
+      <div id="playerWrap" class="creature-wrap player-wrap"><canvas id="playerSprite" width="240" height="240"></canvas></div>
+    </div>
+
+    <div id="enemyInfo" class="battle-info enemy-info">
+      <div class="info-head"><span id="enemyName">—</span><span id="enemyLevel" class="lvl">Nv. 5</span></div>
+      <div class="hp-track"><div id="enemyHp" class="hp-fill"></div></div>
+      <div class="info-foot"><span id="enemyStatus" class="status-chip"></span><span id="enemyHpText" class="hp-text">30/30</span></div>
+    </div>
+
+    <div id="playerInfo" class="battle-info player-info">
+      <div class="info-head"><span id="bpName">—</span><span id="bpLevel" class="lvl">Nv. 5</span></div>
+      <div class="hp-track"><div id="playerHp" class="hp-fill"></div></div>
+      <div class="info-foot"><span id="playerStatus" class="status-chip"></span><span id="playerHpText" class="hp-text">30/30</span></div>
+    </div>
+
+    <div id="battleFloat" class="battle-float"></div>
+
+    <div id="battleBox" class="battle-box">
+      <div id="battleMsg" class="battle-msg">Um encontro selvagem!</div>
+      <div id="battleActions" class="battle-actions hidden"></div>
+      <div id="battleChips" class="battle-chips hidden"></div>
+    </div>
+  </section>
+
+  <!-- ===== Ending / cinematic ===== -->
+  <section id="cine" class="cine hidden">
+    <div id="cineInner" class="cine-inner"></div>
+  </section>
+
+  <div id="fader" class="fader"></div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/sprites.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/world.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/battle.js"></script>
+<script src="js/game.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

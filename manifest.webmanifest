@@ -1,0 +1,12 @@
+{
+  "name": "NÉVOA — A Lenda dos Três Cristais",
+  "short_name": "NÉVOA",
+  "description": "RPG original de criaturas em português, com suporte offline e interface móvel.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0d0a18",
+  "theme_color": "#120e20",
+  "icons": [
+    { "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
